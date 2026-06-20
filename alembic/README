@@ -1,0 +1,7 @@
+Alembic migrations for fwf-backend.
+
+Common commands (run from fwf-backend/ with the venv active):
+
+  alembic revision --autogenerate -m "message"
+  alembic upgrade head
+  alembic downgrade -1
