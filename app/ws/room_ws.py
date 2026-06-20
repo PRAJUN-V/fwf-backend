@@ -17,7 +17,7 @@ from sqlalchemy.orm import Session
 from app.api.deps import get_user_from_token
 from app.core.database import SessionLocal
 from app.models.room import GameType, Room
-from app.services import number_service, room_service
+from app.services import hand_cricket_service, number_service, room_service
 from app.services.room_service import RoomError
 
 router = APIRouter()
@@ -59,6 +59,7 @@ def _build_state(db: Session, room: Room, viewer_id: int) -> dict:
         "room": room_service.serialize_room(db, room).model_dump(mode="json"),
         "game": None,
         "number": None,
+        "hand_cricket": None,
     }
     if room.game_type == GameType.snakes_and_ladders:
         if room.game is not None:
@@ -67,6 +68,10 @@ def _build_state(db: Session, room: Room, viewer_id: int) -> dict:
             )
     elif room.game_type == GameType.number_prediction:
         payload["number"] = number_service.serialize_state(db, room, viewer_id)
+    elif room.game_type == GameType.hand_cricket:
+        payload["hand_cricket"] = hand_cricket_service.serialize_state(
+            db, room, viewer_id
+        )
     return payload
 
 
@@ -89,6 +94,19 @@ def _handle_action(db: Session, room: Room, user_id: int, data: dict) -> None:
             number_service.start_game(db, room=room, user_id=user_id)
         elif action == "guess":
             number_service.make_guess(db, room=room, user_id=user_id, value=data.get("value"))
+        elif action == "sync":
+            return
+        else:
+            raise RoomError(f"Unknown action: {action}")
+    elif room.game_type == GameType.hand_cricket:
+        if action == "start":
+            hand_cricket_service.start_game(db, room=room, user_id=user_id)
+        elif action == "begin_innings_2":
+            hand_cricket_service.begin_innings_two(db, room=room, user_id=user_id)
+        elif action == "reveal":
+            hand_cricket_service.reveal_fingers(
+                db, room=room, user_id=user_id, value=data.get("value")
+            )
         elif action == "sync":
             return
         else:

@@ -125,8 +125,8 @@ def create_room(
 ) -> Room:
     from app.models.room import GameType
 
-    # Number prediction is strictly a 2-player duel.
-    if game_type == GameType.number_prediction:
+    # Number prediction and hand cricket are strictly 2-player duels.
+    if game_type in (GameType.number_prediction, GameType.hand_cricket):
         max_players = 2
 
     room = Room(

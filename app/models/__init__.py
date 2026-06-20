@@ -8,6 +8,11 @@ from app.models.number_game import (
     NumberGuess,
     GuessResult,
 )
+from app.models.hand_cricket_game import (
+    HandCricketGame,
+    HandCricketBall,
+    HandCricketStatus,
+)
 
 __all__ = [
     "User",
@@ -22,4 +27,7 @@ __all__ = [
     "NumberGameStatus",
     "NumberGuess",
     "GuessResult",
+    "HandCricketGame",
+    "HandCricketBall",
+    "HandCricketStatus",
 ]

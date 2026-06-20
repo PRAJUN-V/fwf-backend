@@ -15,6 +15,7 @@ class GameType(str, enum.Enum):
     snakes_and_ladders = "snakes_and_ladders"
     ludo = "ludo"
     number_prediction = "number_prediction"
+    hand_cricket = "hand_cricket"
 
 
 class RoomStatus(str, enum.Enum):
@@ -48,4 +49,7 @@ class Room(Base):
     )
     number_game: Mapped["NumberGame | None"] = relationship(  # noqa: F821
         "NumberGame", back_populates="room", uselist=False, cascade="all, delete-orphan"
+    )
+    hand_cricket_game: Mapped["HandCricketGame | None"] = relationship(  # noqa: F821
+        "HandCricketGame", back_populates="room", uselist=False, cascade="all, delete-orphan"
     )
