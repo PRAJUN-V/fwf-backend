@@ -1,0 +1,36 @@
+# Render Blueprint for the Fun With Friends backend.
+# This file lives at the root of the backend repository. Connect the repo in the
+# Render dashboard ("New +" -> "Blueprint"). With autoDeploy enabled, every push
+# to `master` triggers a new build + deploy (migrations run during the build).
+services:
+  - type: web
+    name: fwf-backend
+    runtime: python
+    plan: free
+    branch: master
+    autoDeploy: true
+    buildCommand: "pip install -r requirements.txt && alembic upgrade head"
+    startCommand: "uvicorn app.main:app --host 0.0.0.0 --port $PORT"
+    healthCheckPath: /health
+    envVars:
+      - key: PYTHON_VERSION
+        value: "3.13.4"
+      # Neon Postgres connection string, e.g.
+      # postgresql+psycopg2://USER:PASSWORD@HOST/DB?sslmode=require
+      - key: DATABASE_URL
+        sync: false
+      - key: JWT_SECRET_KEY
+        generateValue: true
+      - key: JWT_ALGORITHM
+        value: HS256
+      - key: ACCESS_TOKEN_EXPIRE_MINUTES
+        value: "1440"
+      # Comma-separated list of allowed frontend origins (your Netlify URL).
+      - key: CORS_ORIGINS
+        sync: false
+      - key: FIRST_ADMIN_USERNAME
+        sync: false
+      - key: FIRST_ADMIN_EMAIL
+        sync: false
+      - key: FIRST_ADMIN_PASSWORD
+        sync: false
