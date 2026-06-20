@@ -21,6 +21,8 @@ class RoomPlayer(Base):
     user_id: Mapped[int] = mapped_column(ForeignKey("users.id"), nullable=False, index=True)
     seat_order: Mapped[int] = mapped_column(Integer, nullable=False)
     color: Mapped[str] = mapped_column(String(20), nullable=False)
+    # Used by the number-prediction game: the player's secret number (0-1000).
+    secret_number: Mapped[int | None] = mapped_column(Integer, nullable=True)
     joined_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=_utcnow)
 
     room: Mapped["Room"] = relationship("Room", back_populates="players")  # noqa: F821

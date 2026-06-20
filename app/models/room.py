@@ -14,6 +14,7 @@ def _utcnow() -> datetime:
 class GameType(str, enum.Enum):
     snakes_and_ladders = "snakes_and_ladders"
     ludo = "ludo"
+    number_prediction = "number_prediction"
 
 
 class RoomStatus(str, enum.Enum):
@@ -44,4 +45,7 @@ class Room(Base):
     )
     game: Mapped["Game | None"] = relationship(  # noqa: F821
         "Game", back_populates="room", uselist=False, cascade="all, delete-orphan"
+    )
+    number_game: Mapped["NumberGame | None"] = relationship(  # noqa: F821
+        "NumberGame", back_populates="room", uselist=False, cascade="all, delete-orphan"
     )

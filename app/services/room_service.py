@@ -123,6 +123,12 @@ def is_member(room: Room, user_id: int) -> bool:
 def create_room(
     db: Session, *, name: str, game_type, max_players: int, host_id: int
 ) -> Room:
+    from app.models.room import GameType
+
+    # Number prediction is strictly a 2-player duel.
+    if game_type == GameType.number_prediction:
+        max_players = 2
+
     room = Room(
         code=generate_room_code(db),
         name=name,
