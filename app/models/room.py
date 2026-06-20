@@ -26,6 +26,7 @@ class Room(Base):
     __tablename__ = "rooms"
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    code: Mapped[str | None] = mapped_column(String(12), unique=True, index=True, nullable=True)
     name: Mapped[str] = mapped_column(String(80), index=True, nullable=False)
     game_type: Mapped[GameType] = mapped_column(
         Enum(GameType), default=GameType.snakes_and_ladders, nullable=False

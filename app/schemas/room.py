@@ -11,6 +11,10 @@ class RoomCreate(BaseModel):
     max_players: int = Field(default=2, ge=2, le=4)
 
 
+class RoomJoinByCode(BaseModel):
+    code: str = Field(min_length=4, max_length=12)
+
+
 class RoomPlayerOut(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
@@ -24,6 +28,7 @@ class RoomOut(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
     id: int
+    code: str | None
     name: str
     game_type: GameType
     max_players: int

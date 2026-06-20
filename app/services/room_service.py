@@ -5,7 +5,9 @@ source of truth. Functions here operate on a SQLAlchemy session and commit
 their own changes.
 """
 
-from sqlalchemy import func, select
+import secrets
+
+from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from app.games import snakes_and_ladders as snl
@@ -15,9 +17,16 @@ from app.models.room_player import RoomPlayer
 from app.schemas.game import GamePlayerStateOut, GameStateOut
 from app.schemas.room import RoomOut, RoomPlayerOut
 
+# Unambiguous characters (no 0/O/1/I/L) for easy sharing.
+_CODE_ALPHABET = "ABCDEFGHJKMNPQRSTUVWXYZ23456789"
+
 
 class RoomError(Exception):
     """Raised for invalid room/game operations (maps to HTTP 400)."""
+
+
+class RoomNotFound(Exception):
+    """Raised when a room cannot be found (maps to HTTP 404)."""
 
 
 def _next_color(seat_order: int) -> str:
@@ -25,10 +34,22 @@ def _next_color(seat_order: int) -> str:
     return colors[seat_order % len(colors)]
 
 
+def generate_room_code(db: Session, length: int = 6) -> str:
+    """Generate a short, unique, shareable room code."""
+    for _ in range(20):
+        code = "".join(secrets.choice(_CODE_ALPHABET) for _ in range(length))
+        exists = db.scalar(select(Room.id).where(Room.code == code))
+        if not exists:
+            return code
+    # Extremely unlikely; widen the space as a fallback.
+    return "".join(secrets.choice(_CODE_ALPHABET) for _ in range(length + 4))
+
+
 def serialize_room(db: Session, room: Room) -> RoomOut:
     players = sorted(room.players, key=lambda p: p.seat_order)
     return RoomOut(
         id=room.id,
+        code=room.code,
         name=room.name,
         game_type=room.game_type,
         max_players=room.max_players,
@@ -77,21 +98,33 @@ def serialize_game_state(db: Session, room: Room) -> GameStateOut:
     )
 
 
-def list_open_rooms(db: Session) -> list[Room]:
-    stmt = select(Room).where(Room.status != RoomStatus.finished).order_by(Room.created_at.desc())
-    return list(db.scalars(stmt))
+def list_user_rooms(db: Session, user_id: int) -> list[Room]:
+    """Rooms the user is a participant in (private; not a public lobby)."""
+    stmt = (
+        select(Room)
+        .join(RoomPlayer, RoomPlayer.room_id == Room.id)
+        .where(RoomPlayer.user_id == user_id, Room.status != RoomStatus.finished)
+        .order_by(Room.created_at.desc())
+    )
+    return list(db.scalars(stmt).unique())
+
+
+def get_room_by_code(db: Session, code: str) -> Room:
+    room = db.scalar(select(Room).where(Room.code == code.strip().upper()))
+    if room is None:
+        raise RoomNotFound("No room found with that code")
+    return room
+
+
+def is_member(room: Room, user_id: int) -> bool:
+    return any(p.user_id == user_id for p in room.players)
 
 
 def create_room(
     db: Session, *, name: str, game_type, max_players: int, host_id: int
 ) -> Room:
-    existing = db.scalar(
-        select(Room).where(Room.name == name, Room.status != RoomStatus.finished)
-    )
-    if existing is not None:
-        raise RoomError("A room with this name already exists")
-
     room = Room(
+        code=generate_room_code(db),
         name=name,
         game_type=game_type,
         max_players=max_players,

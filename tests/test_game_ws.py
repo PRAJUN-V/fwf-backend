@@ -28,7 +28,7 @@ def _setup_two_player_room(client: TestClient, admin_token: str):
         headers=auth_header(host_token),
         json={"name": name, "game_type": "snakes_and_ladders", "max_players": 2},
     ).json()
-    client.post(f"/rooms/{room['id']}/join", headers=auth_header(guest_token))
+    client.post("/rooms/join", headers=auth_header(guest_token), json={"code": room["code"]})
     return room["id"], (host_token, host_id), (guest_token, guest_id)
 
 

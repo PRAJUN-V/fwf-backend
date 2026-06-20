@@ -78,6 +78,11 @@ async def room_socket(websocket: WebSocket, room_id: int, token: str | None = No
             await websocket.close(code=4404)
             return
 
+        # Private rooms: only members (host + joined players) may connect.
+        if not room_service.is_member(room, user.id):
+            await websocket.close(code=4403)
+            return
+
         await manager.connect(room_id, websocket)
         await websocket.send_json(_build_state(db, room))
         await manager.broadcast(room_id, _build_state(db, room))
