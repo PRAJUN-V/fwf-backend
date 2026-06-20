@@ -20,10 +20,14 @@ class Settings(BaseSettings):
     first_admin_email: str = "admin@example.com"
     first_admin_password: str = "admin123"
 
-    cors_origins: str = "http://localhost:3000"
+    # Default allowed origins (local dev + the production Netlify site).
+    # Can still be overridden via the CORS_ORIGINS env var.
+    cors_origins: str = (
+        "http://localhost:3000,https://fun-with-friends.netlify.app"
+    )
     # Optional regex to allow dynamic origins, e.g. Netlify preview deploys:
     #   CORS_ORIGIN_REGEX=https://.*\.netlify\.app
-    cors_origin_regex: str | None = None
+    cors_origin_regex: str | None = r"https://.*\.netlify\.app"
 
     @property
     def cors_origins_list(self) -> list[str]:
